@@ -14,7 +14,7 @@ st.set_page_config(page_title="LY Aja Barcode Generator", page_icon="🏷️", l
 if "user_aktif" not in st.session_state:
     st.session_state.user_aktif = None
 
-# --- LAYAR LOGIN ---
+# --- TAMPILAN LOGIN ---
 if st.session_state.user_aktif is None:
     st.markdown("""
     <style>
