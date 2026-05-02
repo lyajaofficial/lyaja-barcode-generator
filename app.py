@@ -125,7 +125,7 @@ if df_master is not None and not df_master.empty:
     with st.sidebar:
         st.header("⚙️ Konfigurasi")
         
-        # Filter bertingkat yang aman
+        # --- PERBAIKAN: FILTER 4 TINGKAT ---
         kategori_sel = st.selectbox("Kategori", df_master['Kategori'].unique())
         df_filtered_kat = df_master[df_master['Kategori'] == kategori_sel]
         
@@ -133,11 +133,13 @@ if df_master is not None and not df_master.empty:
         df_filtered_var = df_filtered_kat[df_filtered_kat['Varian'] == varian_sel]
         
         ukuran_sel = st.selectbox("Ukuran", df_filtered_var['Ukuran'].unique())
+        df_filtered_uk = df_filtered_var[df_filtered_var['Ukuran'] == ukuran_sel]
         
-        # Ambil baris pertama yang cocok
-        row_terpilih = df_filtered_var[df_filtered_var['Ukuran'] == ukuran_sel].iloc[0]
-        
-        st.text_input("Kemasan", value=row_terpilih['Kemasan'], disabled=True)
+        # Kemasan sekarang menjadi pilihan Selectbox, bukan text mati
+        kemasan_sel = st.selectbox("Kemasan", df_filtered_uk['Kemasan'].unique())
+        row_terpilih = df_filtered_uk[df_filtered_uk['Kemasan'] == kemasan_sel].iloc[0]
+        # -----------------------------------
+
         st.divider()
         lokasi = st.selectbox("Lokasi", ["J", "B"])
         tz_wib = pytz.timezone('Asia/Jakarta')
@@ -147,7 +149,6 @@ if df_master is not None and not df_master.empty:
         yy, mm, dd = tanggal_prod.strftime("%y"), tanggal_prod.strftime("%m"), tanggal_prod.strftime("%d")
         tgl_silang = f"{yy[0]}{mm[0]}{dd[0]}{yy[1]}{mm[1]}{dd[1]}"
         
-        # Variabel Aman untuk SKU (Logika 1KG Dihapus)
         kode_kat = str(row_terpilih['Kode_Kategori']).strip()
         uk_str = str(row_terpilih['Ukuran']).split(" ")[0].upper().strip()
         
@@ -176,9 +177,10 @@ if df_master is not None and not df_master.empty:
             bar_proses.empty()
             zip_data_sementara = zip_buffer.getvalue()
             
-            # Membersihkan nama file khusus untuk Windows (Mencegah Karakter Ilegal)
             safe_sku = sku_prefix.replace("/", "_").replace("&", "_dan_").replace("\\", "_").replace(":", "")
-            zip_nama_file = f"Barcode_LYAja_{safe_sku}_{tgl_silang}.zip"
+            # Menambahkan nama kemasan di nama file ZIP agar mudah dibedakan saat di-download
+            safe_kemasan = kemasan_sel.replace(" ", "_")
+            zip_nama_file = f"Barcode_{safe_sku}_{safe_kemasan}_{tgl_silang}.zip"
             pesan_sukses = f"Berhasil memproses {jumlah_cetak} Barcode."
 
         st.divider()
@@ -193,7 +195,7 @@ if df_master is not None and not df_master.empty:
         data_scan = f"{sku_prefix}-{lokasi}{tgl_silang}01"
         
         preview_img = generate_label(teks_label, data_scan)
-        st.image(preview_img, caption="PDF417 Ori (2.5 x 0.7 cm, Font 24)", width=450)
+        st.image(preview_img, caption="PDF417 (2.5 x 0.7 cm)", width=450)
         
         if zip_data_sementara is not None:
             st.success(pesan_sukses)
@@ -201,6 +203,6 @@ if df_master is not None and not df_master.empty:
 
     with col2:
         st.subheader("📋 Detail SKU")
-        st.info(f"**Scan Isi:** `{data_scan}`\n\n**Varian:** {varian_sel}")
+        st.info(f"**Scan Isi:** `{data_scan}`\n\n**Varian:** {varian_sel}\n\n**Kemasan:** {kemasan_sel}")
 else:
     st.warning("Menunggu database / Gagal Menarik Data...")
